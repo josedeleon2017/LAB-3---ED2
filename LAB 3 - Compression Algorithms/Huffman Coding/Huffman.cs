@@ -16,6 +16,8 @@ namespace LAB_3___Compressor.Huffman_Coding
 
         public string EncodeData(byte[] content)
         {
+            count_chars = content.Length;
+
             Node root = CreateTree(content);
             GenerateCodes(root, "");
 
@@ -43,8 +45,7 @@ namespace LAB_3___Compressor.Huffman_Coding
             }
 
             //concatenate the metadata with the compressed data
-
-
+            encode_final = metadata + encode_final;
 
             original_weight = content.Length;
             compressed_weight = encode_final.Length;
@@ -56,7 +57,7 @@ namespace LAB_3___Compressor.Huffman_Coding
         public Node CreateTree(byte[] text)
         {
             List<Node> base_frequencies = ProbeFrequencies(text);
-            base_frequencies = SetPercentages(base_frequencies);
+            base_frequencies = SortCharacterList(SetPercentages(base_frequencies));
             SetMetaData(base_frequencies);
 
             while (base_frequencies.Count != 1)
@@ -109,25 +110,28 @@ namespace LAB_3___Compressor.Huffman_Coding
                 {
                     Node new_character = new Node { Character = text[i], Frequency = 1 };
                     data_list.Add(new_character);
-                    count_chars++;
                 }
             }
-            return SortCharacterList(data_list);
+            return data_list;
         }
 
         public List<Node> SetPercentages(List<Node> list)
         {
             for (int i = 0; i < list.Count; i++)
             {
-                list[i].Percentage = list[i].Frequency / count_chars;
+                double frequency = Convert.ToDouble(list[i].Frequency);
+                double total = Convert.ToDouble(count_chars);
+                double percentage = frequency / total;
+
+                list[i].Percentage = percentage;
             }
-            return list;
+            return SortCharacterList(list);
         }
 
         public void SetMetaData(List<Node> list)
         {
             //number of different characters
-            byte[] count_byte = new byte[] { Convert.ToByte(count_chars) };
+            byte[] count_byte = new byte[] { Convert.ToByte(list.Count) };
             metadata += Encoding.ASCII.GetString(count_byte);
 
             //number of bytes for each character frequencie

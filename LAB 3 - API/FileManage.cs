@@ -18,6 +18,7 @@ namespace LAB_3___API
         public double CompressionRatio { get; set; }
         public double CompressionFactor { get; set; }
         public double ReductionPercentage { get; set; }
+        public DateTime DateOfCompression { get; set; }
 
         public List<FileManage> GetAllCompressions(string path)
         {
@@ -34,13 +35,13 @@ namespace LAB_3___API
 
         public void SaveFile(IFormFile file, string output_path)
         {
-            if (!File.Exists(output_path))
+            if (File.Exists(output_path))
             {
-                using (var fs = new FileStream(output_path, FileMode.OpenOrCreate))
-                {
-                    //ARREGLAR COPIA ENCIMA DEL ANTIGUO ///////////////////////////////////////////////
-                    file.CopyToAsync(fs);
-                }
+                File.Delete(output_path);
+            }
+            using (var fs = new FileStream(output_path, FileMode.OpenOrCreate))
+            {
+                file.CopyTo(fs);
             }
             return;
         }
@@ -62,7 +63,7 @@ namespace LAB_3___API
             {
                using(StreamWriter sw = new StreamWriter(fs, Encoding.ASCII))
                 {
-                    sw.WriteAsync(result);
+                    sw.Write(result);
                 }
             }
 
