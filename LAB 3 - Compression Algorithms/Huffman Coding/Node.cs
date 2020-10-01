@@ -4,18 +4,20 @@ using System.Text;
 
 namespace LAB_3___Compressor.Huffman_Coding
 {
-    class Node
+    public class Node
     {
-        public char Character { get; set; }
-        public int RelativeFrequency { get; set; }
+        public byte Character { get; set; }
+        public int Frequency { get; set; }
+        public double Percentage { get; set; }
         public string Code { get; set; }
         public Node Left { get; set; }
         public Node Right { get; set; }
 
         public Node()
         {
-            Character = '`';
-            RelativeFrequency = 0;
+            Character = 00;
+            Frequency = 0;
+            Percentage = 0;
             Code = " ";
             Left = null;
             Right = null;

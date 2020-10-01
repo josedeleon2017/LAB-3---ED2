@@ -5,5 +5,9 @@
     <RootNamespace>LAB_3___API</RootNamespace>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\LAB 3 - Compression Algorithms\LAB 3 - Compression Algorithms.csproj" />
+  </ItemGroup>
+
 
 </Project>
