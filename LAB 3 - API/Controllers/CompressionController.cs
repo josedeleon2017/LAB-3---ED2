@@ -36,7 +36,7 @@ namespace LAB_3___API.Controllers
             string file_compressedpath = environment.ContentRootPath + $"\\compressions\\{name}_resultado.huff";
             FileManage _file = new FileManage() { OriginalFileName = file.Name+".txt", CompressedFileName = name+".huff", CompressedFilePath = file_compressedpath , DateOfCompression = Convert.ToDateTime(DateTime.Now.ToShortTimeString())};
 
-            //Save file in the server
+            //Save the file in the server
             _file.SaveFile(file, file_path);
 
             //Compress the file previously saved

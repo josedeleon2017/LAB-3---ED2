@@ -21,7 +21,7 @@
 					]
 				},
 				"url": {
-					"raw": "http://localhost:65528/api/compress/prueba",
+					"raw": "http://localhost:65528/api/compress/ejercicio",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -30,7 +30,7 @@
 					"path": [
 						"api",
 						"compress",
-						"prueba"
+						"ejercicio"
 					]
 				}
 			},
@@ -62,7 +62,16 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": ""
+					"raw": "http://localhost:65528/api/compressions",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "65528",
+					"path": [
+						"api",
+						"compressions"
+					]
 				}
 			},
 			"response": []

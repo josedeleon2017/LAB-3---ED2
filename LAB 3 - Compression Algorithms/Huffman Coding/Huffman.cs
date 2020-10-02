@@ -2,23 +2,27 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using LAB_3___Compressor.DataStructures;
 
 namespace LAB_3___Compressor.Huffman_Coding
 {
     public class Huffman : Interfaces.ICompressionAlgorithm
     {
         Dictionary<byte, string> codes = new Dictionary<byte, string>();
+        PriorityQueue<CharacterNode> queue = new PriorityQueue<CharacterNode>();
+        
         string metadata= "";
 
-        int count_chars = 0;
+        int count_chars;
         double original_weight;
         double compressed_weight;
 
         public string EncodeData(byte[] content)
         {
             count_chars = content.Length;
+            queue.PriorityComparison = PriorityComparison;
 
-            Node root = CreateTree(content);
+            CharacterNode root = CreateTree(content);
             GenerateCodes(root, "");
 
             //swap each char for its binary code
@@ -54,27 +58,28 @@ namespace LAB_3___Compressor.Huffman_Coding
         }
 
 
-        public Node CreateTree(byte[] text)
+        public CharacterNode CreateTree(byte[] text)
         {
-            List<Node> base_frequencies = ProbeFrequencies(text);
-            base_frequencies = SortCharacterList(SetPercentages(base_frequencies));
-            SetMetaData(base_frequencies);
+            List<CharacterNode> base_frequencies = ProbeFrequencies(text);
+            List<CharacterNode> list_complete = SetPercentages(base_frequencies);
 
-            while (base_frequencies.Count != 1)
+            SetMetaData(list_complete);
+            SetQueue(list_complete);
+
+
+            while (queue.Count != 1)
             {
-                Node intermediate_node = new Node { Percentage = base_frequencies.ElementAt(0).Percentage + base_frequencies.ElementAt(1).Percentage};
-                intermediate_node.Left = base_frequencies.ElementAt(0);
-                intermediate_node.Right = base_frequencies.ElementAt(1);
-                base_frequencies.RemoveAt(0);
-                base_frequencies.RemoveAt(0);
-                base_frequencies.Add(intermediate_node);
-                base_frequencies = SortCharacterList(base_frequencies);
+                CharacterNode left_node = queue.Pop();
+                CharacterNode right_node = queue.Pop();
+
+                CharacterNode intermadiate_note = new CharacterNode() { Percentage= (left_node.Percentage + right_node.Percentage) ,Left = left_node, Right = right_node};
+                queue.Push(intermadiate_note);
             }
-            return base_frequencies.ElementAt(0);
+            return queue.Pop();
         }
 
 
-        public void GenerateCodes(Node root, string current_code)
+        public void GenerateCodes(CharacterNode root, string current_code)
         {
             if (root.Left == null && root.Right == null)
             {
@@ -95,9 +100,9 @@ namespace LAB_3___Compressor.Huffman_Coding
             }
         }
 
-        public List<Node> ProbeFrequencies(byte[] text)
+        public List<CharacterNode> ProbeFrequencies(byte[] text)
         {
-            List<Node> data_list = new List<Node>();
+            List<CharacterNode> data_list = new List<CharacterNode>();
             int text_length = text.Length;
             for (int i = 0; i < text_length; i++)
             {
@@ -108,14 +113,14 @@ namespace LAB_3___Compressor.Huffman_Coding
                 }
                 else
                 {
-                    Node new_character = new Node { Character = text[i], Frequency = 1 };
+                    CharacterNode new_character = new CharacterNode { Character = text[i], Frequency = 1 };
                     data_list.Add(new_character);
                 }
             }
             return data_list;
         }
 
-        public List<Node> SetPercentages(List<Node> list)
+        public List<CharacterNode> SetPercentages(List<CharacterNode> list)
         {
             for (int i = 0; i < list.Count; i++)
             {
@@ -125,10 +130,10 @@ namespace LAB_3___Compressor.Huffman_Coding
 
                 list[i].Percentage = percentage;
             }
-            return SortCharacterList(list);
+            return list;
         }
 
-        public void SetMetaData(List<Node> list)
+        public void SetMetaData(List<CharacterNode> list)
         {
             //number of different characters
             byte[] count_byte = new byte[] { Convert.ToByte(list.Count) };
@@ -142,13 +147,13 @@ namespace LAB_3___Compressor.Huffman_Coding
 
             for (int i = 0; i < list.Count; i++)
             {
-                Node _node = list[i];
+                CharacterNode _node = list[i];
                 byte[] frequency_byte = new byte[] { Convert.ToByte(_node.Frequency) };
                 metadata += Convert.ToChar(_node.Character).ToString() + Encoding.ASCII.GetString(frequency_byte);
             }
         }
 
-        public int DetectPositionCharacter(List<Node> data_list, byte character)
+        public int DetectPositionCharacter(List<CharacterNode> data_list, byte character)
         {
             for (int i = 0; i < data_list.Count; i++)
             {
@@ -160,9 +165,12 @@ namespace LAB_3___Compressor.Huffman_Coding
             return -1;
         }
 
-        public List<Node> SortCharacterList(List<Node> data_list)
+        private void SetQueue(List<CharacterNode> list)
         {
-            return data_list.OrderBy(x => x.Percentage).ToList();
+            for (int i = 0; i < list.Count; i++)
+            {
+                queue.Push(list[i]);
+            }
         }
 
         public string DecodeData(byte[] content)
@@ -185,5 +193,16 @@ namespace LAB_3___Compressor.Huffman_Coding
         {
             return (compressed_weight / original_weight);
         }
+
+        public static Comparison<CharacterNode> PriorityComparison = delegate (CharacterNode node1, CharacterNode node2)
+        {
+            if (node1.Percentage > node2.Percentage) return 1;
+            if (node1.Percentage < node2.Percentage) return -1;
+            return 0;
+
+        };
+
+
+
     }
 }
