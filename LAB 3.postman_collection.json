@@ -21,7 +21,7 @@
 					]
 				},
 				"url": {
-					"raw": "http://localhost:65528/api/compress/ejercicio",
+					"raw": "http://localhost:65528/api/compress/prueba",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -30,17 +30,27 @@
 					"path": [
 						"api",
 						"compress",
-						"ejercicio"
+						"prueba"
 					]
 				}
 			},
 			"response": []
 		},
 		{
-			"name": "Step 3 - Query all compressions",
+			"name": "Step 2 - Decompress file",
 			"request": {
 				"method": "POST",
 				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": "/C:/Users/José De León/Desktop/LAB 3 - Huffman/LAB 3 - API/Data/compressions/prueba.huff"
+						}
+					]
+				},
 				"url": {
 					"raw": "http://localhost:65528/api/decompress",
 					"protocol": "http",
@@ -57,7 +67,7 @@
 			"response": []
 		},
 		{
-			"name": "Step 2 - Decompress file",
+			"name": "Step 3 - Query all compressions",
 			"request": {
 				"method": "GET",
 				"header": [],

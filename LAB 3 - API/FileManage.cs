@@ -41,9 +41,16 @@ namespace LAB_3___API
             }
             using (var fs = new FileStream(output_path, FileMode.OpenOrCreate))
             {
+                
                 file.CopyTo(fs);
             }
             return;
+        }
+
+
+        public void DeleteFile(string path)
+        {
+            File.Delete(path);
         }
 
         public void CompressFile(string path)
@@ -58,13 +65,10 @@ namespace LAB_3___API
                     br.Read(buffer,0,(int)fs.Length);
                 }
             }
-            string result = hf.EncodeData(buffer);
+            byte[] result = hf.EncodeData(buffer);
             using (var fs = new FileStream(CompressedFilePath, FileMode.OpenOrCreate))
             {
-               using(StreamWriter sw = new StreamWriter(fs, Encoding.ASCII))
-                {
-                    sw.Write(result);
-                }
+                fs.Write(result, 0, result.Length);
             }
 
             CompressionRatio = hf.CompressionRatio();
@@ -72,10 +76,32 @@ namespace LAB_3___API
             ReductionPercentage = hf.ReductionPercentage();
         }
 
+        public void DecompressFile(string path, string file_name)
+        {
+            Huffman hf = new Huffman();
+            byte[] buffer;
+            using (FileStream fs = new FileStream(path, FileMode.OpenOrCreate))
+            {
+                buffer = new byte[fs.Length];
+                using (var br = new BinaryReader(fs))
+                {
+                    br.Read(buffer, 0, (int)fs.Length);
+                }
+            }
+            byte[] result = hf.DecodeData(buffer);
+
+            string[] path_result = path.Split("Data");
+            string file_path = path_result[0] + $"\\Data\\decompressions\\{file_name}";
+            using (var fs = new FileStream(file_path, FileMode.OpenOrCreate))
+            {
+                fs.Write(result, 0, result.Length);
+            }
+        }
+
         public void WriteCompression(FileManage file)
         {
-            string[] path = CompressedFilePath.Split("compressions");
-            string file_path = path[0] + "\\compressions\\log\\log.txt";
+            string[] path = CompressedFilePath.Split("Data");
+            string file_path = path[0] + "\\Data\\log\\log.txt";
 
             List<FileManage> list;
             string json_text = "";
@@ -108,5 +134,29 @@ namespace LAB_3___API
             }
         }
 
+
+        public string GetOriginalName(string path_root ,string compression_path)
+        {
+
+            string file_path = path_root + "\\Data\\log\\log.txt";
+
+            string json_text = "";
+            using (FileStream fs = new FileStream(file_path, FileMode.OpenOrCreate))
+            {
+                using (StreamReader sr = new StreamReader(fs))
+                {
+                    json_text = sr.ReadToEnd();
+                }
+            }
+            JsonSerializerOptions name_rule = new JsonSerializerOptions { IgnoreNullValues = true };
+            List<FileManage> list = JsonSerializer.Deserialize<List<FileManage>>(json_text, name_rule);
+
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (list[i].CompressedFilePath == compression_path) return list[i].OriginalFileName;
+            }
+            return null;
+
+        }
     }
 }

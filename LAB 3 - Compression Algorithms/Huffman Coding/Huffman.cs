@@ -8,28 +8,32 @@ namespace LAB_3___Compressor.Huffman_Coding
 {
     public class Huffman : Interfaces.ICompressionAlgorithm
     {
-        Dictionary<byte, string> codes = new Dictionary<byte, string>();
+        Dictionary<byte, string> codes_encode = new Dictionary<byte, string>();
+        Dictionary<string, byte> codes_decode = new Dictionary<string, byte>();
+
         PriorityQueue<CharacterNode> queue = new PriorityQueue<CharacterNode>();
-        
-        string metadata= "";
+        List<byte> metadata = new List<byte>();
 
         int count_chars;
         double original_weight;
         double compressed_weight;
 
-        public string EncodeData(byte[] content)
+        public byte[] EncodeData(byte[] content)
         {
             count_chars = content.Length;
             queue.PriorityComparison = PriorityComparison;
 
-            CharacterNode root = CreateTree(content);
+            //count all frequencies
+            List<CharacterNode> base_frequencies = ProbeFrequencies(content);
+
+            CharacterNode root = CreateTree(base_frequencies);
             GenerateCodes(root, "");
 
             //swap each char for its binary code
             string content_encoded = "";
             for (int i = 0; i < content.Length; i++)
             {
-                content_encoded += codes[content[i]];
+                content_encoded += codes_encode[content[i]];
             }
 
             //complete the last octet
@@ -38,30 +42,26 @@ namespace LAB_3___Compressor.Huffman_Coding
                 content_encoded += "0";
             }
 
-            //converting each binary code to a decimal number and then converting it to an ascii byte
-            string encode_final = "";
+            //converting each binary code to a decimal number and then converting to byte
+            List<byte> encode_final = metadata;
             for (int i = 0; i < content_encoded.Length; i += 8)
             {
                 string code_bin = content_encoded.Substring(i, 8);
                 int code_dec = Convert.ToInt32(code_bin, 2);
-                byte[] code_byte = new byte[] { Convert.ToByte(code_dec) };
-                encode_final += Encoding.ASCII.GetString(code_byte);
+                encode_final.Add(Convert.ToByte(code_dec));
             }
 
-            //concatenate the metadata with the compressed data
-            encode_final = metadata + encode_final;
-
             original_weight = content.Length;
-            compressed_weight = encode_final.Length;
-
-            return encode_final;
+            compressed_weight = encode_final.Count;
+             
+            return encode_final.ToArray();
         }
 
 
-        public CharacterNode CreateTree(byte[] text)
+        private CharacterNode CreateTree(List<CharacterNode> list)
         {
-            List<CharacterNode> base_frequencies = ProbeFrequencies(text);
-            List<CharacterNode> list_complete = SetPercentages(base_frequencies);
+
+            List<CharacterNode> list_complete = SetPercentages(list);
 
             SetMetaData(list_complete);
             SetQueue(list_complete);
@@ -79,12 +79,13 @@ namespace LAB_3___Compressor.Huffman_Coding
         }
 
 
-        public void GenerateCodes(CharacterNode root, string current_code)
+        private void GenerateCodes(CharacterNode root, string current_code)
         {
             if (root.Left == null && root.Right == null)
             {
                 root.Code = current_code;
-                codes.Add(root.Character, root.Code);
+                codes_encode.Add(root.Character, root.Code);
+                codes_decode.Add(root.Code, root.Character);
                 return;
             }
             if (root.Left != null)
@@ -100,7 +101,7 @@ namespace LAB_3___Compressor.Huffman_Coding
             }
         }
 
-        public List<CharacterNode> ProbeFrequencies(byte[] text)
+        private List<CharacterNode> ProbeFrequencies(byte[] text)
         {
             List<CharacterNode> data_list = new List<CharacterNode>();
             int text_length = text.Length;
@@ -120,7 +121,7 @@ namespace LAB_3___Compressor.Huffman_Coding
             return data_list;
         }
 
-        public List<CharacterNode> SetPercentages(List<CharacterNode> list)
+        private List<CharacterNode> SetPercentages(List<CharacterNode> list)
         {
             for (int i = 0; i < list.Count; i++)
             {
@@ -133,27 +134,26 @@ namespace LAB_3___Compressor.Huffman_Coding
             return list;
         }
 
-        public void SetMetaData(List<CharacterNode> list)
+        private void SetMetaData(List<CharacterNode> list)
         {
             //number of different characters
-            byte[] count_byte = new byte[] { Convert.ToByte(list.Count) };
-            metadata += Encoding.ASCII.GetString(count_byte);
+            metadata.Add(Convert.ToByte(list.Count));
 
             //number of bytes for each character frequencie
             int number_bytes = (1 + 1);
-            byte[] number_byte = new byte[] { Convert.ToByte(number_bytes) };
-            metadata += Encoding.ASCII.GetString(number_byte);
+            metadata.Add(Convert.ToByte(number_bytes));
 
 
             for (int i = 0; i < list.Count; i++)
             {
                 CharacterNode _node = list[i];
-                byte[] frequency_byte = new byte[] { Convert.ToByte(_node.Frequency) };
-                metadata += Convert.ToChar(_node.Character).ToString() + Encoding.ASCII.GetString(frequency_byte);
+
+                metadata.Add(Convert.ToByte(_node.Character));
+                metadata.Add(Convert.ToByte(_node.Frequency));
             }
         }
 
-        public int DetectPositionCharacter(List<CharacterNode> data_list, byte character)
+        private int DetectPositionCharacter(List<CharacterNode> data_list, byte character)
         {
             for (int i = 0; i < data_list.Count; i++)
             {
@@ -173,9 +173,53 @@ namespace LAB_3___Compressor.Huffman_Coding
             }
         }
 
-        public string DecodeData(byte[] content)
+        public byte[] DecodeData(byte[] content)
         {
-            throw new NotImplementedException();
+            int characters = content[0];
+            int lenght = content[1];
+
+            //generates the codes with the metadata
+            queue.PriorityComparison = PriorityComparison;
+            List<CharacterNode> list = new List<CharacterNode>();
+            int count = (characters * lenght)/2;
+            for (int i = lenght; i <= count*lenght; i+=lenght)
+            {
+                CharacterNode node = new CharacterNode { Character = content[i], Frequency = content[i + 1] };
+                count_chars += content[i + 1];
+                list.Add(node);
+            }
+            CharacterNode root = CreateTree(list);
+            GenerateCodes(root, "");
+
+            //convert the bytes to binary code
+            string content_decoded = "";
+            int start = (characters * lenght) + 2;
+            for (int i = start; i < content.Length; i++)
+            {
+                int dec = content[i];
+                string bin = Convert.ToInt32(Convert.ToString(dec, 2)).ToString("D8"); ;
+                content_decoded += bin;
+            }
+
+            //replace all binary code to the equivalent byte
+            List<byte> result = new List<byte>();
+            string current_code = "";
+
+            int replaced = 0;
+            int j = 0;
+            while (replaced<count_chars)
+            {
+                current_code += content_decoded[j];
+                if (codes_decode.ContainsKey(current_code))
+                {
+                    result.Add(codes_decode[current_code]);
+                    current_code = "";
+                    replaced++;
+                }
+                j++;
+            }
+
+            return result.ToArray();
         }
 
 
@@ -194,7 +238,7 @@ namespace LAB_3___Compressor.Huffman_Coding
             return (compressed_weight / original_weight);
         }
 
-        public static Comparison<CharacterNode> PriorityComparison = delegate (CharacterNode node1, CharacterNode node2)
+        private static Comparison<CharacterNode> PriorityComparison = delegate (CharacterNode node1, CharacterNode node2)
         {
             if (node1.Percentage > node2.Percentage) return 1;
             if (node1.Percentage < node2.Percentage) return -1;
