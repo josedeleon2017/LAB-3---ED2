@@ -7,7 +7,7 @@ namespace LAB_3___ConsoleApplication
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("\t\t\t\t\t\t- LAB 3 -\n\nKevin Romero 1047519\nJosé De León 1072619");
+            Console.WriteLine("\t\t\t\t\t\t\t- LAB 3 -\n\nKevin Romero 1047519\nJosé De León 1072619");
             Huffman hf = new Huffman();
 
             string original = "Tu trabajo va a llenar gran parte de tu vida, la única manera de estar realmente satisfecho es hacer lo que creas es un gran trabajo y la única manera de hacerlo es amar lo que haces. Si no lo has encontrado aún, sigue buscando. Como con todo lo que tiene que ver con el corazón, sabrás cuando lo hayas encontrado. -Steve Jobs";
@@ -17,11 +17,17 @@ namespace LAB_3___ConsoleApplication
             Console.WriteLine("\n\nTEXTO COMPRIMIDO");
             Console.WriteLine(ConvertToChar(compression_result));
 
-            Huffman hf2 = new Huffman();
+            double compression_factor = hf.CompressionFactor();
+            double compression_ratio = hf.CompressionRatio();
+            double reduction_percentage = hf.ReductionPercentage();
 
-            byte[] descompression_result = hf2.DecodeData(compression_result);
+            hf = new Huffman();
+            byte[] descompression_result = hf.DecodeData(compression_result);
             Console.WriteLine("\n\nTEXTO DESCOMPRIMIDO");
             Console.WriteLine(ConvertToChar(descompression_result));
+
+            Console.WriteLine("\n\n\t\tFACTOR DE COMPRESIÓN\t\tRAZÓN DE COMPRESIÓN\t\tPORCENTAJE DE REDUCCIÓN");
+            Console.WriteLine("\t\t"+compression_factor +"\t\t"+ compression_ratio + "\t\t"+ reduction_percentage);
 
 
             Console.ReadLine();

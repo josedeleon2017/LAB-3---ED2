@@ -139,18 +139,70 @@ namespace LAB_3___Compressor.Huffman_Coding
             //number of different characters
             metadata.Add(Convert.ToByte(list.Count));
 
+            //PRUEBA////////////////////////////////////////////////////////
+            int max_frequency = FindMaxLenght(list);
+            string bin = Convert.ToString(max_frequency, 2);
+
+            ///normalize the max lenght
+            while (bin.Length % 8 != 0)
+            {
+                bin = "0" + bin;
+            }
+
             //number of bytes for each character frequencie
-            int number_bytes = (1 + 1);
+            int number_bytes = bin.Length / 8;
             metadata.Add(Convert.ToByte(number_bytes));
 
 
             for (int i = 0; i < list.Count; i++)
             {
                 CharacterNode _node = list[i];
-
                 metadata.Add(Convert.ToByte(_node.Character));
-                metadata.Add(Convert.ToByte(_node.Frequency));
+
+                byte[] complete_frequency = GetNormalizeFrequency(_node.Frequency, number_bytes);
+                for (int j = 0; j < complete_frequency.Length; j++)
+                {
+                    metadata.Add(complete_frequency[j]);
+                }
             }
+        }
+
+        private int FindMaxLenght(List<CharacterNode> list)
+        {
+            List<CharacterNode> order_list = list.OrderByDescending(x => x.Frequency).ToList();
+            return order_list[0].Frequency;
+        }
+
+        private byte[] GetNormalizeFrequency(int frequency, int bytes_count)
+        {
+            List<byte> c_frequency = new List<byte>(bytes_count);
+
+            //if the nortmalize is innecesary
+            if (frequency < 256)
+            {
+                for (int i = 0; i < bytes_count-1; i++)
+                {
+                    c_frequency.Add(0);
+                }
+                c_frequency.Add(Convert.ToByte(frequency));
+                return c_frequency.ToArray();
+            }
+
+            ///normalize the current frequency
+            string bin = Convert.ToString(frequency, 2);
+            while (bin.Length % 8 != 0)
+            {
+                bin = "0"+bin;
+            }
+
+            for (int i = 0; i < bin.Length; i += 8)
+            {
+                string split_bit = bin.Substring(i, 8);
+                int byte_converted = Convert.ToInt32(split_bit, 2);
+                c_frequency.Add(Convert.ToByte(byte_converted));
+            }
+
+            return c_frequency.ToArray();
         }
 
         private int DetectPositionCharacter(List<CharacterNode> data_list, byte character)
@@ -176,28 +228,64 @@ namespace LAB_3___Compressor.Huffman_Coding
         public byte[] DecodeData(byte[] content)
         {
             int characters = content[0];
-            int lenght = content[1];
+            int length = content[1];
 
             //generates the codes with the metadata
             queue.PriorityComparison = PriorityComparison;
-            List<CharacterNode> list = new List<CharacterNode>();
-            int count = (characters * lenght)/2;
-            for (int i = lenght; i <= count*lenght; i+=lenght)
+            List<CharacterNode> list = new List<CharacterNode>(characters);
+
+            if (length == 2)
             {
-                CharacterNode node = new CharacterNode { Character = content[i], Frequency = content[i + 1] };
-                count_chars += content[i + 1];
-                list.Add(node);
+                int chars_added = 0;
+                int index = 2;
+                while (chars_added < characters)
+                {
+                    byte char_byte = content[index];
+
+                    List<byte> complex_frequency = new List<byte>();
+                    complex_frequency.Add(content[index + 1]);
+                    complex_frequency.Add(content[index + 2]);
+                    int total_frequency = GetFrequency(complex_frequency);
+
+
+                    CharacterNode c_node = new CharacterNode() { Character = char_byte, Frequency = total_frequency };
+                    list.Add(c_node);
+                    count_chars += total_frequency;
+
+                    index += length + 1;
+                    chars_added++;
+                }
+                CharacterNode root = CreateTree(list);
+                GenerateCodes(root, "");
             }
-            CharacterNode root = CreateTree(list);
-            GenerateCodes(root, "");
+            if (length == 1)
+            {
+                int chars_added = 0;
+                int index = 2;
+                while (chars_added < characters)
+                {
+                    byte char_byte = content[index];
+                    int total_frequency = content[index + 1];
+
+
+                    CharacterNode c_node = new CharacterNode() { Character = char_byte, Frequency = total_frequency };
+                    list.Add(c_node);
+                    count_chars += total_frequency;
+
+                    index += length + 1;
+                    chars_added++;
+                }
+                CharacterNode root = CreateTree(list);
+                GenerateCodes(root, "");
+            }
 
             //convert the bytes to binary code
             string content_decoded = "";
-            int start = (characters * lenght) + 2;
+            int start = ((length + 1) * characters) + 2;
             for (int i = start; i < content.Length; i++)
             {
                 int dec = content[i];
-                string bin = Convert.ToInt32(Convert.ToString(dec, 2)).ToString("D8"); ;
+                string bin = Convert.ToInt32(Convert.ToString(dec, 2)).ToString("D8");
                 content_decoded += bin;
             }
 
@@ -222,7 +310,19 @@ namespace LAB_3___Compressor.Huffman_Coding
             return result.ToArray();
         }
 
+        private int GetFrequency(List<byte> values)
+        {
+            string partial_binary = "";
+            for (int i = 0; i < values.Count; i++)
+            {
+                int dec = values[i];
+                partial_binary = partial_binary + Convert.ToInt32(Convert.ToString(dec, 2)).ToString("D8");
 
+            }
+            int final_desc = Convert.ToInt32(partial_binary, 2);
+            return final_desc;
+        }
+        
         public double ReductionPercentage()
         {
             return 1 - (compressed_weight/original_weight);
