@@ -31,52 +31,66 @@ namespace LAB_3___API.Controllers
         [HttpPost("compress/{name}")]
         public ActionResult CompressFile([FromForm] IFormFile file, string name)
         {
-            string file_path = environment.ContentRootPath + $"\\Data\\temporal\\{name}.txt";
+            try
+            {
+                string file_path = environment.ContentRootPath + $"\\Data\\temporal\\{name}.txt";
 
-            string file_compressedpath = environment.ContentRootPath + $"\\Data\\compressions\\{name}.huff";
-            FileManage _file = new FileManage() { OriginalFileName = file.FileName, CompressedFileName = name+".huff", CompressedFilePath = file_compressedpath , DateOfCompression = Convert.ToDateTime(DateTime.Now.ToShortTimeString())};
+                string file_compressedpath = environment.ContentRootPath + $"\\Data\\compressions\\{name}.huff";
+                FileManage _file = new FileManage() { OriginalFileName = file.FileName, CompressedFileName = name + ".huff", CompressedFilePath = file_compressedpath, DateOfCompression = Convert.ToDateTime(DateTime.Now.ToShortTimeString()) };
 
-            //Save the file in the server
-            _file.SaveFile(file, file_path);
+                //Save the file in the server
+                _file.SaveFile(file, file_path);
 
-            //Compress the file previously saved
-            _file.CompressFile(file_path);
+                //Compress the file previously saved
+                _file.CompressFile(file_path);
 
-            //Write on log file the compression result
-            _file.WriteCompression(_file);
+                //Write on log file the compression result
+                _file.WriteCompression(_file);
 
-            //Delete the original file 
-            _file.DeleteFile(file_path);
+                //Delete the original file 
+                _file.DeleteFile(file_path);
 
 
-            FileStream result = new FileStream(_file.CompressedFilePath,FileMode.Open);
-            return File(result,"text/plain");
+                FileStream result = new FileStream(_file.CompressedFilePath, FileMode.Open);
+                return File(result, "text/plain");
+            }
+            catch (Exception)
+            {
+                return StatusCode(500);
+            }           
         }
 
         [HttpPost("decompress")]
         public ActionResult DecompressFile([FromForm] IFormFile file)
         {
-            string file_path = environment.ContentRootPath + $"\\Data\\temporal\\{file.FileName}";
-            string output_file_path = environment.ContentRootPath + $"\\Data\\compressions\\{file.FileName}";
+            try
+            {
+                string file_path = environment.ContentRootPath + $"\\Data\\temporal\\{file.FileName}";
+                string output_file_path = environment.ContentRootPath + $"\\Data\\compressions\\{file.FileName}";
 
-            FileManage _file = new FileManage();
+                FileManage _file = new FileManage();
 
-            //Save the file in the server
-            _file.SaveFile(file, file_path);
+                //Save the file in the server
+                _file.SaveFile(file, file_path);
 
-            //Get the original file name
-            string file_name = _file.GetOriginalName(environment.ContentRootPath, output_file_path);
+                //Get the original file name
+                string file_name = _file.GetOriginalName(environment.ContentRootPath, output_file_path);
 
-            //Decompress the file previosly saved
-            _file.DecompressFile(file_path, file_name);
+                //Decompress the file previosly saved
+                _file.DecompressFile(file_path, file_name);
 
 
-            //Delete the original file 
-            _file.DeleteFile(file_path);
+                //Delete the original file 
+                _file.DeleteFile(file_path);
 
-            string path = environment.ContentRootPath + $"\\Data\\decompressions\\{file_name}";
-            FileStream result = new FileStream(path, FileMode.Open);
-            return File(result, "text/plain");
+                string path = environment.ContentRootPath + $"\\Data\\decompressions\\{file_name}";
+                FileStream result = new FileStream(path, FileMode.Open);
+                return File(result, "text/plain");
+            }
+            catch (Exception)
+            {
+                return StatusCode(500);
+            }        
         }
 
         [HttpGet("compressions")]
@@ -84,7 +98,7 @@ namespace LAB_3___API.Controllers
         {
             try
             {
-                string path = environment.ContentRootPath+"\\Data\\log\\log.txt";
+                string path = environment.ContentRootPath+ "\\Data\\compressions_history.json";
                 FileManage fm = new FileManage();
                 return fm.GetAllCompressions(path);           
             }

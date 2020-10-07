@@ -101,7 +101,7 @@ namespace LAB_3___API
         public void WriteCompression(FileManage file)
         {
             string[] path = CompressedFilePath.Split("Data");
-            string file_path = path[0] + "\\Data\\log\\log.txt";
+            string file_path = path[0] + "\\Data\\compressions_history.json";
 
             List<FileManage> list;
             string json_text = "";
@@ -138,7 +138,7 @@ namespace LAB_3___API
         public string GetOriginalName(string path_root ,string compression_path)
         {
 
-            string file_path = path_root + "\\Data\\log\\log.txt";
+            string file_path = path_root + "\\Data\\compressions_history.json";
 
             string json_text = "";
             using (FileStream fs = new FileStream(file_path, FileMode.OpenOrCreate))
