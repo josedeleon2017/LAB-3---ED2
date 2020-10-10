@@ -34,7 +34,7 @@ namespace LAB_3___API.Controllers
             try
             {
                 string file_path = environment.ContentRootPath + $"\\Data\\temporal\\{name}.txt";
-
+                string fileName = file.FileName;
                 string file_compressedpath = environment.ContentRootPath + $"\\Data\\compressions\\{name}.huff";
                 FileManage _file = new FileManage() { OriginalFileName = file.FileName, CompressedFileName = name + ".huff", CompressedFilePath = file_compressedpath, DateOfCompression = Convert.ToDateTime(DateTime.Now.ToShortTimeString()) };
 
@@ -50,12 +50,13 @@ namespace LAB_3___API.Controllers
                 //Delete the original file 
                 _file.DeleteFile(file_path);
 
-
                 FileStream result = new FileStream(_file.CompressedFilePath, FileMode.Open);
-                return File(result, "text/plain");
+                return File(result, "text/plain", _file.CompressedFileName);
+                
             }
             catch (Exception)
             {
+
                 return StatusCode(500);
             }           
         }
@@ -74,7 +75,7 @@ namespace LAB_3___API.Controllers
                 _file.SaveFile(file, file_path);
 
                 //Get the original file name
-                string file_name = _file.GetOriginalName(environment.ContentRootPath, output_file_path);
+                string file_name = _file.GetOriginalName(environment.ContentRootPath, file.FileName);
 
                 //Decompress the file previosly saved
                 _file.DecompressFile(file_path, file_name);
@@ -85,7 +86,7 @@ namespace LAB_3___API.Controllers
 
                 string path = environment.ContentRootPath + $"\\Data\\decompressions\\{file_name}";
                 FileStream result = new FileStream(path, FileMode.Open);
-                return File(result, "text/plain");
+                return File(result, "text/plain", file_name);
             }
             catch (Exception)
             {

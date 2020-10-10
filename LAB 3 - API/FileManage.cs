@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Text;
 using LAB_3___Compressor.Huffman_Coding;
 using System.Text.Json;
+using Microsoft.Extensions.FileSystemGlobbing.Internal.PathSegments;
 
 namespace LAB_3___API
 {
@@ -65,12 +66,28 @@ namespace LAB_3___API
                     br.Read(buffer,0,(int)fs.Length);
                 }
             }
+
             byte[] result = hf.EncodeData(buffer);
+
+            for (int i = 1; File.Exists(CompressedFilePath) ; i++)
+            {
+                var split = CompressedFileName.Split(".huff");
+                if (split[0].Contains("("))
+                {
+                    var split2 = split[0].Split("(");
+                    CompressedFileName = split2[0] + "(" + i + ")" + ".huff";
+                }
+                else
+                CompressedFileName = split[0] + "(" + i + ")" + ".huff";
+
+                split = CompressedFilePath.Split("compressions");
+                CompressedFilePath = split[0] + "compressions\\" + CompressedFileName;
+            }
+
             using (var fs = new FileStream(CompressedFilePath, FileMode.OpenOrCreate))
             {
                 fs.Write(result, 0, result.Length);
             }
-
             CompressionRatio = hf.CompressionRatio();
             CompressionFactor = hf.CompressionFactor();
             ReductionPercentage = hf.ReductionPercentage();
@@ -80,14 +97,17 @@ namespace LAB_3___API
         {
             Huffman hf = new Huffman();
             byte[] buffer;
+
+
             using (FileStream fs = new FileStream(path, FileMode.OpenOrCreate))
             {
                 buffer = new byte[fs.Length];
                 using (var br = new BinaryReader(fs))
                 {
-                    br.Read(buffer, 0, (int)fs.Length);
+                    br.Read(buffer, 0, buffer.Length);
                 }
             }
+            hf = new Huffman();
             byte[] result = hf.DecodeData(buffer);
 
             string[] path_result = path.Split("Data");
@@ -135,7 +155,7 @@ namespace LAB_3___API
         }
 
 
-        public string GetOriginalName(string path_root ,string compression_path)
+        public string GetOriginalName(string path_root ,string Compressed_FileName)
         {
 
             string file_path = path_root + "\\Data\\compressions_history.json";
@@ -153,7 +173,7 @@ namespace LAB_3___API
 
             for (int i = 0; i < list.Count; i++)
             {
-                if (list[i].CompressedFilePath == compression_path) return list[i].OriginalFileName;
+                if (list[i].CompressedFileName == Compressed_FileName) return list[i].OriginalFileName;
             }
             return null;
 
