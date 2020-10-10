@@ -41,6 +41,6 @@ El archivo descomprimido resultante lo podrá encontrar en la solución del proy
 
 3. Haga una petición **GET** en ***api/compressions*** para consultar todas las compresiones realizadas en la api. Esta consulta devuelve una serie de objetos json con propiedades como la razón de compresión, factor de compresión y el porcentaje de reducción, además del nombre original del archivo compreso y la ruta del archivo resultante.
 
-Los registros de estas compresiones son almacenadas en el archivo de texto ***log*** dentro de la solucion del proyecto.
+Los registros de estas compresiones son almacenadas en el archivo ***Data/compressions_history.json*** dentro de la solucion del proyecto.
 
 
